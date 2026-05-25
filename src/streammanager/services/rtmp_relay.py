@@ -71,4 +71,4 @@ class RTMPRelay:
     def _free_port() -> int:
         with socket.socket() as s:
             s.bind(("", 0))
-            return s.getsockname()[1]
+            return int(s.getsockname()[1])
