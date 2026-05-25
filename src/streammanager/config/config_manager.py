@@ -1,5 +1,5 @@
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -98,11 +98,18 @@ class ConfigManager:
         try:
             with open(CONFIG_FILE) as f:
                 data: dict[str, object] = json.load(f)
+
+            def _load_dc(cls: type, raw: object) -> object:
+                if not isinstance(raw, dict):
+                    return cls()
+                known = {f.name for f in fields(cls)}
+                return cls(**{k: v for k, v in raw.items() if k in known})
+
             return AppConfig(
-                obs=OBSSavedConfig(**data.get("obs", {})),  # type: ignore[arg-type]
-                facebook=FacebookSavedConfig(**data.get("facebook", {})),  # type: ignore[arg-type]
-                youtube=YouTubeSavedConfig(**data.get("youtube", {})),  # type: ignore[arg-type]
-                stream=StreamDefaults(**data.get("stream", {})),  # type: ignore[arg-type]
+                obs=_load_dc(OBSSavedConfig, data.get("obs", {})),  # type: ignore[arg-type]
+                facebook=_load_dc(FacebookSavedConfig, data.get("facebook", {})),  # type: ignore[arg-type]
+                youtube=_load_dc(YouTubeSavedConfig, data.get("youtube", {})),  # type: ignore[arg-type]
+                stream=_load_dc(StreamDefaults, data.get("stream", {})),  # type: ignore[arg-type]
             )
         except Exception:
             return AppConfig()
