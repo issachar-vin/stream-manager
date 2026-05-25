@@ -1,7 +1,9 @@
+import queue
 import sys
 import threading
 import tkinter as tk
 import webbrowser
+from collections.abc import Callable
 from pathlib import Path
 from tkinter import messagebox, ttk
 
@@ -17,15 +19,18 @@ def _asset(name: str) -> Path:
 
 class MainWindow:
     _OBS_POLL_INTERVAL_MS = 5000
+    _UI_PUMP_INTERVAL_MS = 50
 
     def __init__(self, app: StreamManagerApp) -> None:
         self._app = app
         self._is_live = False
         self._pages: list[FacebookPage] = []
         self._stream_status: StreamStatus | None = None
+        self._ui_queue: queue.Queue[Callable[[], object]] = queue.Queue()
         self._root = tk.Tk()
         self._build_ui()
         self._load_saved_settings()
+        self._root.after(self._UI_PUMP_INTERVAL_MS, self._pump_ui)
         self._schedule_obs_poll()
 
     # ── Layout ────────────────────────────────────────────────────────────
@@ -509,35 +514,49 @@ class MainWindow:
         self._run_async(self._do_test_obs)
 
     def _do_test_obs(self) -> None:
-        self._obs_status_var.set("Connecting...")
+        self._on_main(lambda: self._obs_status_var.set("Connecting..."))
         try:
-            self._app.config.config.obs.host = self._obs_host_var.get().strip()
-            self._app.config.config.obs.password = self._obs_password_var.get()
-            self._app.config.config.obs.port = int(self._obs_port_var.get())
+            cfg = self._app.config.config.obs
             obs = __import__("obsws_python", fromlist=["ReqClient"]).ReqClient(
-                host=self._app.config.config.obs.host,
-                port=self._app.config.config.obs.port,
-                password=self._app.config.config.obs.password,
+                host=cfg.host,
+                port=cfg.port,
+                password=cfg.password,
                 timeout=5,
             )
             version = obs.get_version()
             obs.disconnect()
-            self._obs_status_var.set(f"Connected - OBS {version.obs_version}")
+            v = version.obs_version
+            self._on_main(lambda: self._obs_status_var.set(f"Connected - OBS {v}"))
         except Exception as exc:
-            self._obs_status_var.set(f"Failed: {exc}")
+            msg = str(exc)
+
+            def _obs_err() -> None:
+                self._obs_status_var.set(f"Failed: {msg}")
+
+            self._on_main(_obs_err)
 
     def _test_youtube(self) -> None:
         self._run_async(self._do_test_youtube)
 
     def _do_test_youtube(self) -> None:
-        self._yt_status_var.set("Checking...")
+        self._on_main(lambda: self._yt_status_var.set("Checking..."))
         try:
-            if self._app.youtube.is_authenticated():
-                self._yt_status_var.set("Authorized")
+            authenticated = self._app.youtube.is_authenticated()
+            if authenticated:
+                self._on_main(lambda: self._yt_status_var.set("Authorized"))
             else:
-                self._yt_status_var.set("Not authorized - click Authorize YouTube")
+                self._on_main(
+                    lambda: self._yt_status_var.set(
+                        "Not authorized - click Authorize YouTube"
+                    )
+                )
         except Exception as exc:
-            self._yt_status_var.set(f"Failed: {exc}")
+            msg = str(exc)
+
+            def _yt_test_err() -> None:
+                self._yt_status_var.set(f"Failed: {msg}")
+
+            self._on_main(_yt_test_err)
 
     def _save_obs(self, silent: bool = False) -> None:
         cfg = self._app.config.config.obs
@@ -560,22 +579,34 @@ class MainWindow:
         self._run_async(self._do_login_youtube)
 
     def _do_login_youtube(self) -> None:
-        self._yt_status_var.set("Opening browser...")
-        self._yt_login_btn.config(state="disabled")
+        def _starting() -> None:
+            self._yt_status_var.set("Opening browser...")
+            self._yt_login_btn.config(state="disabled")
+
+        self._on_main(_starting)
         try:
             self._app.login_youtube()
             channel = self._app.get_youtube_channel_name()
             if channel:
                 self._app.config.config.youtube.channel_name = channel
                 self._app.config.save()
-            self._yt_account_label.config(text="Authorized", foreground="#00aa00")
-            self._yt_status_var.set("Authorized")
-            self._check_go_live_ready()
+
+            def _success() -> None:
+                self._yt_account_label.config(text="Authorized", foreground="#00aa00")
+                self._yt_status_var.set("Authorized")
+                self._yt_login_btn.config(state=tk.NORMAL)
+                self._check_go_live_ready()
+
+            self._on_main(_success)
         except Exception as exc:
-            messagebox.showerror("YouTube Error", str(exc))
-            self._yt_status_var.set("Authorization failed")
-        finally:
-            self._yt_login_btn.config(state=tk.NORMAL)
+            msg = str(exc)
+
+            def _err(m: str = msg) -> None:
+                messagebox.showerror("YouTube Error", m)
+                self._yt_status_var.set("Authorization failed")
+                self._yt_login_btn.config(state=tk.NORMAL)
+
+            self._on_main(_err)
 
     def _open_fb_token_page(self) -> None:
         fb = self._app.config.config.facebook
@@ -598,18 +629,28 @@ class MainWindow:
         self._run_async(self._do_login_facebook, token)
 
     def _do_login_facebook(self, token: str) -> None:
-        self._fb_auth_status_var.set("Exchanging token...")
+        self._on_main(lambda: self._fb_auth_status_var.set("Exchanging token..."))
         try:
             self._app.login_facebook_with_token(token)
             days = self._app.config.days_until_facebook_expiry()
-            self._fb_auth_status_var.set(
+            status_msg = (
                 f"Connected - token expires in {days} days" if days else "Connected"
             )
-            self._fb_token_var.set("")
+
+            def _success(m: str = status_msg) -> None:
+                self._fb_auth_status_var.set(m)
+                self._fb_token_var.set("")
+
+            self._on_main(_success)
             self._load_facebook_pages()
         except Exception as exc:
-            messagebox.showerror("Facebook Error", str(exc))
-            self._fb_auth_status_var.set("Login failed")
+            msg = str(exc)
+
+            def _err(m: str = msg) -> None:
+                messagebox.showerror("Facebook Error", m)
+                self._fb_auth_status_var.set("Login failed")
+
+            self._on_main(_err)
 
     # ── Facebook Page loading ─────────────────────────────────────────────
 
@@ -624,25 +665,40 @@ class MainWindow:
         self._run_async(self._do_test_facebook)
 
     def _do_test_facebook(self) -> None:
-        self._fb_auth_status_var.set("Testing connection...")
+        self._on_main(lambda: self._fb_auth_status_var.set("Testing connection..."))
         try:
             pages = self._app.fetch_facebook_pages()
             names = ", ".join(p.name for p in pages)
-            self._fb_auth_status_var.set(f"Connected - found: {names}")
+
+            def _fb_test_ok() -> None:
+                self._fb_auth_status_var.set(f"Connected - found: {names}")
+
+            self._on_main(_fb_test_ok)
         except Exception as exc:
-            self._fb_auth_status_var.set(f"Failed: {exc}")
+            msg = str(exc)
+
+            def _fb_test_err() -> None:
+                self._fb_auth_status_var.set(f"Failed: {msg}")
+
+            self._on_main(_fb_test_err)
 
     def _load_facebook_pages(self) -> None:
         try:
             pages = self._app.fetch_facebook_pages()
             pages = [PERSONAL_PROFILE] + pages
-            self._pages = pages
-            self._root.after(0, lambda: self._apply_facebook_pages(pages))
+
+            def _apply(p: list[FacebookPage] = pages) -> None:
+                self._pages = p
+                self._apply_facebook_pages(p)
+
+            self._on_main(_apply)
         except Exception as exc:
             msg = str(exc)
-            self._root.after(
-                0, lambda: self._fb_status_var.set(f"Could not load pages: {msg}")
-            )
+
+            def _pages_err() -> None:
+                self._fb_status_var.set(f"Could not load pages: {msg}")
+
+            self._on_main(_pages_err)
 
     def _apply_facebook_pages(self, pages: list[FacebookPage]) -> None:
         names = [p.name for p in pages]
@@ -679,39 +735,65 @@ class MainWindow:
         if self._is_live:
             self._run_async(self._do_end_stream)
         else:
-            self._run_async(self._do_go_live)
+            # Capture all UI state on the main thread before handing off
+            title = self._title_var.get().strip()
+            description = self._description.get("1.0", tk.END).strip()
+            youtube_on = self._yt_enabled.get()
+            facebook_on = self._fb_enabled.get()
+            privacy_label = self._fb_privacy_var.get()
+            self._run_async(
+                self._do_go_live,
+                title,
+                description,
+                youtube_on,
+                facebook_on,
+                privacy_label,
+            )
 
-    def _do_go_live(self) -> None:
-        title = self._title_var.get().strip()
-        description = self._description.get("1.0", tk.END).strip()
+    def _do_go_live(
+        self,
+        title: str,
+        description: str,
+        youtube_on: bool,
+        facebook_on: bool,
+        privacy_label: str,
+    ) -> None:
         if not title:
-            messagebox.showwarning("Missing Title", "Please enter a stream title.")
+            self._on_main(
+                lambda: messagebox.showwarning(
+                    "Missing Title", "Please enter a stream title."
+                )
+            )
             return
 
         stream_cfg = self._app.config.config.stream
         stream_cfg.last_title = title
         stream_cfg.last_description = description
-        stream_cfg.youtube_enabled = self._yt_enabled.get()
-        stream_cfg.facebook_enabled = self._fb_enabled.get()
-        stream_cfg.fb_privacy = self._fb_privacy_var.get()
+        stream_cfg.youtube_enabled = youtube_on
+        stream_cfg.facebook_enabled = facebook_on
+        stream_cfg.fb_privacy = privacy_label
         self._app.config.save()
 
-        youtube_on = self._yt_enabled.get()
-        facebook_on = self._fb_enabled.get()
-
-        self._reset_status_tab()
+        self._on_main(self._reset_status_tab)
 
         if youtube_on:
-            self._set_stream_status("Authorizing YouTube...", busy=True)
+            self._on_main(
+                lambda: self._set_stream_status("Authorizing YouTube...", busy=True)
+            )
             try:
                 self._app.login_youtube()
             except Exception as exc:
-                messagebox.showerror("YouTube Error", str(exc))
-                self._set_stream_status("Error starting stream")
-                self._live_btn.config(state=tk.NORMAL)
+                msg = str(exc)
+
+                def _yt_err(m: str = msg) -> None:
+                    messagebox.showerror("YouTube Error", m)
+                    self._set_stream_status("Error starting stream")
+                    self._live_btn.config(state=tk.NORMAL)
+
+                self._on_main(_yt_err)
                 return
 
-        self._set_stream_status("Creating streams...", busy=True)
+        self._on_main(lambda: self._set_stream_status("Creating streams...", busy=True))
         try:
             privacy_map = {
                 "Public": "EVERYONE",
@@ -722,41 +804,58 @@ class MainWindow:
                 StreamConfig(
                     title=title,
                     description=description,
-                    fb_privacy=privacy_map.get(self._fb_privacy_var.get(), "EVERYONE"),
+                    fb_privacy=privacy_map.get(privacy_label, "EVERYONE"),
                 ),
                 youtube=youtube_on,
                 facebook=facebook_on,
             )
-            self._stream_status = status
-            self._update_status_tab(status)
-            self._notebook.select(1)  # type: ignore[no-untyped-call]
 
-            if status.any_live:
-                self._is_live = True
-                self._live_btn.config(text="End Stream", state=tk.NORMAL)
-                self._set_stream_status(status.summary)
-            else:
-                self._set_stream_status("All platforms failed — see Status tab")
-                self._live_btn.config(state=tk.NORMAL)
+            def _apply(s: StreamStatus = status) -> None:
+                self._stream_status = s
+                self._update_status_tab(s)
+                self._notebook.select(1)  # type: ignore[no-untyped-call]
+                if s.any_live:
+                    self._is_live = True
+                    self._live_btn.config(text="End Stream", state=tk.NORMAL)
+                    self._set_stream_status(s.summary)
+                else:
+                    self._set_stream_status("All platforms failed — see Status tab")
+                    self._live_btn.config(state=tk.NORMAL)
+
+            self._on_main(_apply)
         except Exception as exc:
-            messagebox.showerror("Error", str(exc))
-            self._set_stream_status("Error starting stream")
-            self._live_btn.config(state=tk.NORMAL)
+            msg = str(exc)
+
+            def _err(m: str = msg) -> None:
+                messagebox.showerror("Error", m)
+                self._set_stream_status("Error starting stream")
+                self._live_btn.config(state=tk.NORMAL)
+
+            self._on_main(_err)
 
     def _do_end_stream(self) -> None:
-        self._set_stream_status("Ending stream...", busy=True)
+        self._on_main(lambda: self._set_stream_status("Ending stream...", busy=True))
         try:
             self._app.end_stream()
-            self._is_live = False
-            self._stream_status = None
-            self._live_btn.config(text="Go Live")
-            self._set_stream_status("")
-            self._reset_status_tab()
-            self._check_go_live_ready()
+
+            def _done() -> None:
+                self._is_live = False
+                self._stream_status = None
+                self._live_btn.config(text="Go Live")
+                self._set_stream_status("")
+                self._reset_status_tab()
+                self._check_go_live_ready()
+
+            self._on_main(_done)
         except Exception as exc:
-            messagebox.showerror("Error", str(exc))
-            self._set_stream_status("Error - check logs")
-            self._live_btn.config(state=tk.NORMAL)
+            msg = str(exc)
+
+            def _err(m: str = msg) -> None:
+                messagebox.showerror("Error", m)
+                self._set_stream_status("Error - check logs")
+                self._live_btn.config(state=tk.NORMAL)
+
+            self._on_main(_err)
 
     # ── Status tab updates ────────────────────────────────────────────────
 
@@ -842,10 +941,21 @@ class MainWindow:
         self._stream_status_var.set(message)
         if busy:
             self._live_btn.config(state="disabled")
-        self._root.update_idletasks()
 
     def _run_async(self, fn: object, *args: object) -> None:
         threading.Thread(target=fn, args=args, daemon=True).start()  # type: ignore[arg-type]
+
+    def _on_main(self, fn: Callable[[], object]) -> None:
+        """Schedule fn to run on the main thread. Safe to call from any thread."""
+        self._ui_queue.put(fn)
+
+    def _pump_ui(self) -> None:
+        while True:
+            try:
+                self._ui_queue.get_nowait()()
+            except queue.Empty:
+                break
+        self._root.after(self._UI_PUMP_INTERVAL_MS, self._pump_ui)
 
     # ── OBS status polling ────────────────────────────────────────────────
 
@@ -857,7 +967,11 @@ class MainWindow:
         if self._is_live:
             return
         connected, streaming = self._app.check_obs_status()
-        self._root.after(0, lambda: self._apply_obs_poll(connected, streaming))
+
+        def _poll_cb() -> None:
+            self._apply_obs_poll(connected, streaming)
+
+        self._on_main(_poll_cb)
 
     def _apply_obs_poll(self, connected: bool, streaming: bool) -> None:
         if self._is_live:
