@@ -46,3 +46,6 @@ jobs:
 
       - name: Build app bundle
         run: uv run pyinstaller StreamManager.spec
+
+      - name: Ad-hoc sign app bundle
+        run: codesign --force --deep --sign - dist/StreamManager.app

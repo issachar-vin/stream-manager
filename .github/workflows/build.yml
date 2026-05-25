@@ -30,6 +30,9 @@ jobs:
       - name: Build app bundle
         run: uv run pyinstaller StreamManager.spec
 
+      - name: Ad-hoc sign app bundle
+        run: codesign --force --deep --sign - dist/StreamManager.app
+
       - name: Zip app for distribution
         run: cd dist && zip -r StreamManager-macOS-arm64.zip StreamManager.app
 
@@ -44,7 +47,7 @@ jobs:
 
             1. Download and unzip `StreamManager-macOS-arm64.zip`
             2. Move `StreamManager.app` to your Applications folder
-            3. Right-click → Open (required once since the app is not code-signed)
+            3. Right-click → Open (required once to approve the app)
             4. Run the dependency installer in Terminal:
                ```bash
                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/issachar-vin/stream-manager/main/scripts/install-deps.sh)"
