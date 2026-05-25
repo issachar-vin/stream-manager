@@ -1,11 +1,18 @@
+import sys
 import threading
 import tkinter as tk
 import webbrowser
+from pathlib import Path
 from tkinter import messagebox, ttk
 
 from ..app import StreamManagerApp
 from ..models.stream import StreamConfig, StreamStatus
 from ..services.facebook import PERSONAL_PROFILE, FacebookPage
+
+
+def _asset(name: str) -> Path:
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).parent.parent.parent.parent))
+    return base / "assets" / name
 
 
 class MainWindow:
@@ -28,6 +35,12 @@ class MainWindow:
         self._root.geometry("540x520")
         self._root.minsize(460, 400)
         self._root.resizable(True, True)
+
+        try:
+            icon = tk.PhotoImage(file=_asset("icon.png"))
+            self._root.iconphoto(True, icon)
+        except Exception:
+            pass
 
         ttk.Style().configure("TNotebook.Tab", padding=[16, 6])
 
