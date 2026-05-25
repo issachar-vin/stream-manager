@@ -1,4 +1,4 @@
-.PHONY: all setup run lint build clean deps
+.PHONY: all setup run lint build clean deps bump-patch bump-minor bump-major
 
 APP_NAME := StreamManager
 
@@ -24,6 +24,15 @@ build:
 
 deps:
 	bash scripts/install-deps.sh
+
+bump-patch:
+	@bash scripts/bump-version.sh patch
+
+bump-minor:
+	@bash scripts/bump-version.sh minor
+
+bump-major:
+	@bash scripts/bump-version.sh major
 
 clean:
 	rm -rf dist/ build/ .venv/

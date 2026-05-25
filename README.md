@@ -128,6 +128,9 @@ Paste the App ID and Secret into the Settings tab and click **Login with Faceboo
 | `make run` | Start the app |
 | `make lint` | Run ruff formatter, linter, and mypy |
 | `make build` | Build `dist/StreamManager.app` via PyInstaller |
+| `make bump-patch` | Bump patch version in VERSION file (1.0.0 → 1.0.1) |
+| `make bump-minor` | Bump minor version in VERSION file (1.0.0 → 1.1.0) |
+| `make bump-major` | Bump major version in VERSION file (1.0.0 → 2.0.0) |
 | `make clean` | Remove build artifacts and virtual environment |
 
 ---
@@ -144,11 +147,12 @@ The output is `dist/StreamManager.app`. No Python required to run it.
 
 ### Automated builds via GitHub Actions
 
-Pushing a version tag builds the app on GitHub's arm64 (M1-compatible) runner and attaches the zip to a GitHub Release:
+Every merge to `main` triggers a build and publishes a GitHub Release using the version in the `VERSION` file. To cut a new release, bump the version in your PR:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+make bump-patch   # 1.0.0 → 1.0.1
+make bump-minor   # 1.0.0 → 1.1.0
+make bump-major   # 1.0.0 → 2.0.0
 ```
 
 ---

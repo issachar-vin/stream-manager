@@ -2,8 +2,8 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v*"
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   release:
@@ -13,6 +13,10 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: echo "tag=v$(cat VERSION)" >> "$GITHUB_OUTPUT"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
@@ -32,6 +36,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
           files: dist/StreamManager-macOS-arm64.zip
           body: |
             ## Installation
