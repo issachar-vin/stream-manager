@@ -308,21 +308,8 @@ class MainWindow:
             row=3, column=1, sticky=tk.EW, padx=(8, 0), pady=(6, 0)
         )
 
-        ttk.Label(f, text="Facebook output").grid(
-            row=4, column=0, sticky=tk.W, pady=(6, 0)
-        )
-        self._obs_fb_output_var = tk.StringVar()
-        ttk.Entry(f, textvariable=self._obs_fb_output_var, width=24).grid(
-            row=4, column=1, sticky=tk.EW, padx=(8, 0), pady=(6, 0)
-        )
-        ttk.Label(
-            f,
-            text="Name of the obs-multi-rtmp output used for Facebook",
-            foreground="gray",
-        ).grid(row=5, column=0, columnspan=2, sticky=tk.W)
-
         obs_btn_frame = ttk.Frame(f)
-        obs_btn_frame.grid(row=6, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
+        obs_btn_frame.grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
         ttk.Button(
             obs_btn_frame, text="Save OBS Settings", command=self._save_obs
         ).pack(side=tk.LEFT)
@@ -332,34 +319,34 @@ class MainWindow:
 
         self._obs_status_var = tk.StringVar(value="")
         ttk.Label(f, textvariable=self._obs_status_var, foreground="gray").grid(
-            row=7, column=0, columnspan=2, sticky=tk.W, pady=(4, 0)
+            row=5, column=0, columnspan=2, sticky=tk.W, pady=(4, 0)
         )
 
         ttk.Separator(f, orient="horizontal").grid(
-            row=8, column=0, columnspan=3, sticky=tk.EW, pady=16
+            row=6, column=0, columnspan=3, sticky=tk.EW, pady=16
         )
 
         # ── YouTube ───────────────────────────────────────────────────────
         ttk.Label(f, text="YouTube", font=("", 11, "bold")).grid(
-            row=9, column=0, columnspan=3, sticky=tk.W, pady=(0, 8)
+            row=7, column=0, columnspan=3, sticky=tk.W, pady=(0, 8)
         )
 
-        ttk.Label(f, text="Client ID").grid(row=10, column=0, sticky=tk.W)
+        ttk.Label(f, text="Client ID").grid(row=8, column=0, sticky=tk.W)
         self._yt_client_id_var = tk.StringVar()
         ttk.Entry(f, textvariable=self._yt_client_id_var, width=36).grid(
-            row=10, column=1, sticky=tk.EW, padx=(8, 0)
+            row=8, column=1, sticky=tk.EW, padx=(8, 0)
         )
 
         ttk.Label(f, text="Client Secret").grid(
-            row=11, column=0, sticky=tk.W, pady=(6, 0)
+            row=9, column=0, sticky=tk.W, pady=(6, 0)
         )
         self._yt_client_secret_var = tk.StringVar()
         ttk.Entry(f, textvariable=self._yt_client_secret_var, show="*", width=36).grid(
-            row=11, column=1, sticky=tk.EW, padx=(8, 0), pady=(6, 0)
+            row=9, column=1, sticky=tk.EW, padx=(8, 0), pady=(6, 0)
         )
 
         yt_btn_frame = ttk.Frame(f)
-        yt_btn_frame.grid(row=12, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
+        yt_btn_frame.grid(row=10, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
         self._yt_login_btn = ttk.Button(
             yt_btn_frame, text="Authorize YouTube", command=self._login_youtube
         )
@@ -370,51 +357,51 @@ class MainWindow:
 
         self._yt_status_var = tk.StringVar(value="")
         ttk.Label(f, textvariable=self._yt_status_var, foreground="gray").grid(
-            row=13, column=0, columnspan=2, sticky=tk.W, pady=(4, 0)
+            row=11, column=0, columnspan=2, sticky=tk.W, pady=(4, 0)
         )
 
         ttk.Separator(f, orient="horizontal").grid(
-            row=14, column=0, columnspan=3, sticky=tk.EW, pady=16
+            row=12, column=0, columnspan=3, sticky=tk.EW, pady=16
         )
 
         # ── Facebook ──────────────────────────────────────────────────────
         ttk.Label(f, text="Facebook", font=("", 11, "bold")).grid(
-            row=15, column=0, columnspan=3, sticky=tk.W, pady=(0, 8)
+            row=13, column=0, columnspan=3, sticky=tk.W, pady=(0, 8)
         )
 
-        ttk.Label(f, text="App ID").grid(row=16, column=0, sticky=tk.W)
+        ttk.Label(f, text="App ID").grid(row=14, column=0, sticky=tk.W)
         self._fb_app_id_var = tk.StringVar()
         ttk.Entry(f, textvariable=self._fb_app_id_var, width=36).grid(
-            row=16, column=1, sticky=tk.EW, padx=(8, 0)
+            row=14, column=1, sticky=tk.EW, padx=(8, 0)
         )
 
-        ttk.Label(f, text="App Secret").grid(row=17, column=0, sticky=tk.W, pady=(6, 0))
+        ttk.Label(f, text="App Secret").grid(row=15, column=0, sticky=tk.W, pady=(6, 0))
         self._fb_app_secret_var = tk.StringVar()
         ttk.Entry(f, textvariable=self._fb_app_secret_var, show="*", width=36).grid(
-            row=17, column=1, sticky=tk.EW, padx=(8, 0), pady=(6, 0)
+            row=15, column=1, sticky=tk.EW, padx=(8, 0), pady=(6, 0)
         )
 
         ttk.Button(
             f, text="1. Open Graph API Explorer", command=self._open_fb_token_page
-        ).grid(row=18, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
+        ).grid(row=16, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
 
         ttk.Label(
             f,
             text="Generate a token with these permissions: pages_show_list,\n"
             "pages_read_engagement, pages_manage_posts, publish_video",
             foreground="gray",
-        ).grid(row=19, column=0, columnspan=2, sticky=tk.W, pady=(4, 0))
+        ).grid(row=17, column=0, columnspan=2, sticky=tk.W, pady=(4, 0))
 
         ttk.Label(f, text="2. Paste token here").grid(
-            row=20, column=0, columnspan=2, sticky=tk.W, pady=(12, 4)
+            row=18, column=0, columnspan=2, sticky=tk.W, pady=(12, 4)
         )
         self._fb_token_var = tk.StringVar()
         ttk.Entry(f, textvariable=self._fb_token_var, width=46, show="*").grid(
-            row=21, column=0, columnspan=2, sticky=tk.EW
+            row=19, column=0, columnspan=2, sticky=tk.EW
         )
 
         btn_frame = ttk.Frame(f)
-        btn_frame.grid(row=22, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
+        btn_frame.grid(row=20, column=0, columnspan=2, sticky=tk.W, pady=(10, 0))
         ttk.Button(btn_frame, text="Save Token", command=self._login_facebook).pack(
             side=tk.LEFT
         )
@@ -424,15 +411,15 @@ class MainWindow:
 
         self._fb_auth_status_var = tk.StringVar(value="")
         ttk.Label(f, textvariable=self._fb_auth_status_var, foreground="gray").grid(
-            row=23, column=0, columnspan=2, sticky=tk.W, pady=(6, 0)
+            row=21, column=0, columnspan=2, sticky=tk.W, pady=(6, 0)
         )
 
         ttk.Separator(f, orient="horizontal").grid(
-            row=24, column=0, columnspan=3, sticky=tk.EW, pady=16
+            row=22, column=0, columnspan=3, sticky=tk.EW, pady=16
         )
 
         ttk.Label(f, text="Personal Stream Key", font=("", 10, "bold")).grid(
-            row=25, column=0, columnspan=2, sticky=tk.W
+            row=23, column=0, columnspan=2, sticky=tk.W
         )
         ttk.Label(
             f,
@@ -440,11 +427,11 @@ class MainWindow:
             "facebook.com/live/producer (personal profile).\n"
             "The key is only valid while a live event is in preview there.",
             foreground="gray",
-        ).grid(row=26, column=0, columnspan=2, sticky=tk.W, pady=(4, 8))
+        ).grid(row=24, column=0, columnspan=2, sticky=tk.W, pady=(4, 8))
 
         self._fb_stream_key_var = tk.StringVar()
         ttk.Entry(f, textvariable=self._fb_stream_key_var, width=46).grid(
-            row=27, column=0, columnspan=2, sticky=tk.EW
+            row=25, column=0, columnspan=2, sticky=tk.EW
         )
 
         self._fb_stream_key_enabled_var = tk.BooleanVar(value=False)
@@ -452,10 +439,10 @@ class MainWindow:
             f,
             text="Use stream key (bypasses Page / Personal Profile API)",
             variable=self._fb_stream_key_enabled_var,
-        ).grid(row=28, column=0, columnspan=2, sticky=tk.W, pady=(8, 0))
+        ).grid(row=26, column=0, columnspan=2, sticky=tk.W, pady=(8, 0))
 
         ttk.Button(f, text="Save Stream Key", command=self._save_fb_stream_key).grid(
-            row=29, column=0, columnspan=2, sticky=tk.W, pady=(8, 0)
+            row=27, column=0, columnspan=2, sticky=tk.W, pady=(8, 0)
         )
 
         f.columnconfigure(1, weight=1)
@@ -479,8 +466,6 @@ class MainWindow:
         self._obs_host_var.set(cfg.obs.host)
         self._obs_port_var.set(str(cfg.obs.port))
         self._obs_password_var.set(cfg.obs.password)
-        self._obs_fb_output_var.set(cfg.obs.facebook_output_name)
-
         # YouTube
         self._yt_client_id_var.set(cfg.youtube.client_id)
         self._yt_client_secret_var.set(cfg.youtube.client_secret)
@@ -543,9 +528,6 @@ class MainWindow:
         cfg = self._app.config.config.obs
         cfg.host = self._obs_host_var.get().strip()
         cfg.password = self._obs_password_var.get()
-        cfg.facebook_output_name = (
-            self._obs_fb_output_var.get().strip() or "Facebook Live"
-        )
         try:
             cfg.port = int(self._obs_port_var.get())
         except ValueError:

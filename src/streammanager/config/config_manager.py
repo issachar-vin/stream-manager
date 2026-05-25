@@ -12,7 +12,6 @@ class OBSSavedConfig:
     host: str = "localhost"
     port: int = 4455
     password: str = ""
-    facebook_output_name: str = "Facebook Live"
 
 
 @dataclass
