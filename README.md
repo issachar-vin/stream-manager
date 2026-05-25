@@ -45,9 +45,9 @@ There are two ways to run StreamManager: as a pre-built app (no Python needed) o
 1. Download `StreamManager-macOS-arm64.zip` from the [latest release](https://github.com/your-username/StreamManager/releases)
 2. Unzip and move `StreamManager.app` to your Applications folder
 3. Right-click → **Open** the first time to bypass the Gatekeeper warning (the app is not code-signed)
-4. Install dependencies by running the setup script in Terminal:
+4. Install dependencies by running this command in Terminal:
    ```bash
-   bash /path/to/scripts/install-deps.sh
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/issachar-vin/stream-manager/main/scripts/install-deps.sh)"
    ```
    This installs Homebrew (if missing) and ffmpeg. The Xcode Command Line Tools are the only prerequisite — macOS will prompt you to install them if needed.
 5. Launch the app and follow the Settings tab to connect your accounts
