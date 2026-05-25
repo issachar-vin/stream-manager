@@ -7,6 +7,14 @@ ok()   { echo "  [ok] $*"; }
 info() { echo "  -->  $*"; }
 fail() { echo "  [!]  $*" >&2; exit 1; }
 
+# ── clear macOS quarantine ────────────────────────────────────────────────────
+
+APP="/Applications/StreamManager.app"
+if [[ -d "$APP" ]]; then
+    xattr -cr "$APP"
+    ok "Cleared macOS quarantine on $APP"
+fi
+
 # ── ffmpeg already available? ─────────────────────────────────────────────────
 
 if command -v ffmpeg &>/dev/null; then

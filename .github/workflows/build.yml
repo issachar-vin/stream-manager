@@ -47,8 +47,11 @@ jobs:
 
             1. Download and unzip `StreamManager-macOS-arm64.zip`
             2. Move `StreamManager.app` to your Applications folder
-            3. Right-click → Open (required once to approve the app)
-            4. Run the dependency installer in Terminal:
+            3. Run the dependency installer in Terminal (this also clears the macOS quarantine flag):
                ```bash
                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/issachar-vin/stream-manager/main/scripts/install-deps.sh)"
+               ```
+            4. Open StreamManager — if macOS still says the app is damaged, run:
+               ```bash
+               xattr -cr /Applications/StreamManager.app
                ```
