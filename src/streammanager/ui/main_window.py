@@ -42,8 +42,8 @@ class MainWindow:
         self._root.resizable(True, True)
 
         try:
-            icon = tk.PhotoImage(file=_asset("icon.png"))
-            self._root.iconphoto(True, icon)
+            self._icon = tk.PhotoImage(file=_asset("icon.png"))
+            self._root.iconphoto(True, self._icon)
         except Exception:
             pass
 
