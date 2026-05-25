@@ -1,6 +1,23 @@
 import socket
 import subprocess
 import time
+from pathlib import Path
+
+# Homebrew installs ffmpeg here; these dirs are not on the PATH of a .app bundle.
+_FFMPEG_SEARCH_DIRS = [
+    "/opt/homebrew/bin",  # Apple Silicon
+    "/usr/local/bin",  # Intel
+]
+
+
+def _find_ffmpeg() -> str:
+    """Return an absolute path to ffmpeg, checking Homebrew prefixes first."""
+    for d in _FFMPEG_SEARCH_DIRS:
+        candidate = Path(d) / "ffmpeg"
+        if candidate.is_file():
+            return str(candidate)
+    # Fall back to whatever is on PATH (works fine in Terminal / dev).
+    return "ffmpeg"
 
 
 class RTMPRelay:
@@ -11,6 +28,7 @@ class RTMPRelay:
     def __init__(self) -> None:
         self._proc: subprocess.Popen | None = None  # type: ignore[type-arg]
         self._port: int | None = None
+        self._ffmpeg = _find_ffmpeg()
 
     @property
     def obs_server(self) -> str:
@@ -30,7 +48,7 @@ class RTMPRelay:
 
         self._proc = subprocess.Popen(
             [
-                "ffmpeg",
+                self._ffmpeg,
                 "-listen",
                 "1",
                 "-f",
@@ -57,10 +75,9 @@ class RTMPRelay:
             self._proc = None
         self._port = None
 
-    @staticmethod
-    def _check_ffmpeg() -> None:
+    def _check_ffmpeg(self) -> None:
         try:
-            subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True)
+            subprocess.run([self._ffmpeg, "-version"], capture_output=True, check=True)
         except FileNotFoundError as exc:
             raise RuntimeError(
                 "ffmpeg is required for simultaneous streaming to both platforms.\n"
