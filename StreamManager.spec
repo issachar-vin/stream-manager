@@ -1,10 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+with open("VERSION") as _f:
+    _version = _f.read().strip()
+
 a = Analysis(
     ["src/streammanager/main.py"],
     pathex=["src"],
     binaries=[],
-    datas=[],
+    datas=[
+        ("assets/icon.png", "assets"),
+    ],
     hiddenimports=[
         "google.auth.transport.requests",
         "google_auth_oauthlib.flow",
@@ -34,6 +39,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon="assets/icon.icns",
 )
 
 coll = COLLECT(
@@ -49,7 +55,7 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name="StreamManager.app",
-    icon=None,
+    icon="assets/icon.icns",
     bundle_identifier="com.streammanager.app",
-    version="0.1.0",
+    version=_version,
 )
