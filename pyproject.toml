@@ -42,6 +42,6 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 quote-style = "double"
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.14"
 strict = true
 mypy_path = "src"
