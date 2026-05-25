@@ -4,7 +4,7 @@ with open("VERSION") as _f:
     _version = _f.read().strip()
 
 a = Analysis(
-    ["src/streammanager/main.py"],
+    ["src/run.py"],
     pathex=["src"],
     binaries=[],
     datas=[
