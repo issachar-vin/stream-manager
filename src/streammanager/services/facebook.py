@@ -85,7 +85,7 @@ class FacebookService:
         )
         with urllib.request.urlopen(url) as resp:  # noqa: S310
             data: dict[str, object] = json.loads(resp.read())
-        return str(data["access_token"]), int(data.get("expires_in", 5184000))
+        return str(data["access_token"]), int(data.get("expires_in", 5184000))  # type: ignore[call-overload]
 
     # ── Pages ─────────────────────────────────────────────────────────────
 
@@ -219,7 +219,7 @@ class FacebookService:
                 f"{GRAPH_API_BASE}/{self._live_video_id}",
                 params={
                     "access_token": self._stream_token,
-                    "end_live_video": True,
+                    "end_live_video": "true",
                 },
                 timeout=30,
             )

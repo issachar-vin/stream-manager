@@ -1,7 +1,7 @@
 import subprocess
 import time
 
-import obsws_python as obs
+import obsws_python as obs  # type: ignore[import-untyped]
 
 from ..config.config_manager import OBSSavedConfig as OBSConfig
 

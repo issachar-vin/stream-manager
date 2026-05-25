@@ -68,10 +68,12 @@ class MainWindow:
 
         return inner, canvas
 
-    def _bind_mousewheel(self, widget: tk.Widget, canvas: tk.Canvas) -> None:
+    def _bind_mousewheel(
+        self, widget: tk.Widget | tk.Toplevel, canvas: tk.Canvas
+    ) -> None:
         """Bind mousewheel/trackpad scrolling on widget and all its descendants."""
 
-        def scroll(event: tk.Event) -> None:  # type: ignore[type-arg]
+        def scroll(event: tk.Event) -> None:
             # macOS trackpad sends small deltas; mouse wheel sends multiples of 120.
             delta = event.delta
             units = int(-1 * (delta / 120)) if abs(delta) >= 120 else int(-1 * delta)
@@ -714,7 +716,7 @@ class MainWindow:
             )
             self._stream_status = status
             self._update_status_tab(status)
-            self._notebook.select(1)
+            self._notebook.select(1)  # type: ignore[no-untyped-call]
 
             if status.any_live:
                 self._is_live = True

@@ -4,8 +4,8 @@ import tempfile
 from datetime import UTC, datetime
 
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore[import-untyped]
+from googleapiclient.discovery import build  # type: ignore[import-untyped]
 
 from ..config.config_manager import CONFIG_DIR, ConfigManager
 from ..models.stream import StreamConfig
@@ -18,24 +18,24 @@ _TOKEN_FILE = CONFIG_DIR / "youtube_token.json"
 class YouTubeService:
     def __init__(self, config_manager: ConfigManager) -> None:
         self._cfg = config_manager
-        self._service = None  # type: ignore[var-annotated]
+        self._service = None
         self._broadcast_id: str | None = None
 
     def is_authenticated(self) -> bool:
         if not _TOKEN_FILE.exists():
             return False
         try:
-            creds = Credentials.from_authorized_user_file(str(_TOKEN_FILE), SCOPES)  # type: ignore[assignment]
-            return creds.valid or creds.refresh_token is not None  # type: ignore[union-attr]
+            creds = Credentials.from_authorized_user_file(str(_TOKEN_FILE), SCOPES)  # type: ignore[no-untyped-call]
+            return creds.valid or creds.refresh_token is not None
         except Exception:
             return False
 
     def authenticate(self) -> None:
         creds: Credentials | None = None
         if _TOKEN_FILE.exists():
-            creds = Credentials.from_authorized_user_file(str(_TOKEN_FILE), SCOPES)  # type: ignore[assignment]
+            creds = Credentials.from_authorized_user_file(str(_TOKEN_FILE), SCOPES)  # type: ignore[no-untyped-call]
 
-        if not creds or not creds.valid:  # type: ignore[union-attr]
+        if not creds or not creds.valid:
             yt = self._cfg.config.youtube
             if not yt.client_id or not yt.client_secret:
                 raise RuntimeError(
@@ -67,7 +67,7 @@ class YouTubeService:
 
             _TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
             with open(_TOKEN_FILE, "w") as f:
-                f.write(creds.to_json())  # type: ignore[union-attr]
+                f.write(creds.to_json())
 
         self._service = build("youtube", "v3", credentials=creds)
 
