@@ -8,7 +8,7 @@ Go live on YouTube and Facebook simultaneously from a single click. StreamManage
 
 1. Enter your OBS connection details in Settings (once)
 2. Paste your Google and Facebook developer credentials in Settings (once)
-3. Click "Authorize YouTube" and "Login with Facebook" — browser handles the rest
+3. Click "Authorize YouTube" — browser handles the rest; for Facebook, generate a token via Graph API Explorer and paste it in
 4. On the Stream tab: pick your Facebook Page, enter a title and description, click **Go Live**
 
 When streaming to both platforms, StreamManager starts a local ffmpeg RTMP relay. OBS streams once to the relay, which fans the single stream out to YouTube and Facebook simultaneously. No OBS plugins required.
@@ -44,13 +44,16 @@ There are two ways to run StreamManager: as a pre-built app (no Python needed) o
 
 1. Download `StreamManager-macOS-arm64.zip` from the [latest release](https://github.com/your-username/StreamManager/releases)
 2. Unzip and move `StreamManager.app` to your Applications folder
-3. Right-click → **Open** the first time to bypass the Gatekeeper warning (the app is not code-signed)
-4. Install dependencies by running this command in Terminal:
+3. Run the dependency installer in Terminal (this also clears the macOS quarantine flag):
    ```bash
    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/issachar-vin/stream-manager/main/scripts/install-deps.sh)"
    ```
    This installs Homebrew (if missing) and ffmpeg. The Xcode Command Line Tools are the only prerequisite — macOS will prompt you to install them if needed.
-5. Launch the app and follow the Settings tab to connect your accounts
+4. Open StreamManager — if macOS says the app is damaged, run:
+   ```bash
+   xattr -cr /Applications/StreamManager.app
+   ```
+5. Follow the Settings tab to connect your accounts
 
 ### Option B — Run from source
 
@@ -102,20 +105,24 @@ Paste the Client ID and Secret into the Settings tab and click **Authorize YouTu
 
 ### Facebook
 
-StreamManager uses the Facebook Graph API with OAuth 2.0. You need to create a Meta developer app once.
+StreamManager uses the Facebook Graph API. You need to create a Meta developer app once to get credentials, then generate a token via the Graph API Explorer.
 
-**Get your App ID and Secret:**
+**1. Create a Meta developer app:**
 
 1. Go to [Meta for Developers](https://developers.facebook.com) and click **Create App**
-2. Choose **Business** as the app type
-3. From your app dashboard, copy the **App ID** and **App Secret** (under Settings → Basic)
-4. Add the **Facebook Login** product to your app
-5. Under Facebook Login → Settings, add `http://localhost:8765` to **Valid OAuth Redirect URIs**
-6. Add your Facebook account as a test user under **Roles → Test Users** (until the app is approved for public use)
+2. Choose **Other** → **Consumer** as the app type
+3. From your app dashboard, go to **Settings → Basic** and copy the **App ID** and **App Secret**
 
-Paste the App ID and Secret into the Settings tab and click **Login with Facebook**. A browser window will open to authorize access. The app exchanges the token for a long-lived one (~60 days) and saves it. The Settings tab shows how many days remain.
+**2. Generate an access token:**
 
-**Selecting a Page:** After logging in, the Stream tab's Page dropdown will populate with all Pages you manage. Your last-used Page is remembered automatically.
+1. Paste the App ID and Secret into the Settings tab and click **Open Graph API Explorer**
+2. In the Explorer, select your app from the dropdown in the top-right
+3. Click **Generate Access Token** and grant all requested permissions (`pages_show_list`, `pages_read_engagement`, `pages_manage_posts`, `publish_video`)
+4. Copy the token shown and paste it into the **Access Token** field in Settings, then click **Save Facebook Token**
+
+The app exchanges the short-lived token for a long-lived one (~60 days) automatically. The Settings tab shows how many days remain and you'll be prompted to re-generate when it's close to expiring.
+
+**Selecting a Page:** After saving your token, the Stream tab's Page dropdown will populate with all Pages you manage. Your last-used Page is remembered automatically.
 
 ---
 
@@ -143,7 +150,7 @@ make build
 
 The output is `dist/StreamManager.app`. No Python required to run it.
 
-> **Note:** The app is not code-signed. macOS will show an "unidentified developer" warning on first launch. Right-click → **Open** to bypass it once.
+> **Note:** The app is ad-hoc signed but not notarized. macOS may show a warning on first launch — right-click → **Open** to approve it, or run `xattr -cr /Applications/StreamManager.app` if macOS says the app is damaged.
 
 ### Automated builds via GitHub Actions
 
